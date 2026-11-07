@@ -1,7 +1,10 @@
 
 from pathlib import Path
-from chunker import chunk_policy
-from metadata import add_metadata
+
+from .chunker import chunk_policy
+from .metadata import add_metadata
+from .embeddings import generate_embeddings
+from .search import search_policies
 
 
 # Financial Policy AI Assistant
@@ -52,6 +55,42 @@ def main():
         print(f"Source: {record['source']}")
         print(f"Section: {record['section']}")
 
+    # Phase 3: Generate embeddings for policy chunks
+    print("\n--- Generating Embeddings ---")
+
+    embeddings = generate_embeddings(chunks)
+
+    print("Embeddings generated successfully!")
+    print(f"Number of  chunks: {len(embeddings)}")
+    print(f"Dimensions per embedding: {embeddings.shape[1]}")
+    print(f"Embedding array shape: {embeddings.shape}")
+
+       # Examine an actual embedding
+    print("\n--- Exploring Embeddings ---")
+
+    print("First five numerical values:")
+    print(embeddings[0][:5])
+
+    # Compare two different policy sections
+    similarity = embeddings[2] @ embeddings[3]
+
+    print(f"Employee Access vs MFA similarity: {similarity:.3f}")
+
+    
+    # Phase 3: Search banking policies by meaning
+    print("\n--- Semantic Policy Search ---")
+
+    question = "How quickly must employee access be removed after termination?"
+
+    results = search_policies(question, records, embeddings, top_k=3)
+
+    print(f"\nQuestion: {question}")
+
+    for result in results:
+        print(f"\nSection: {result['section']}")
+        print(f"Source: {result['source']}")
+        print(f"Similarity: {result['similarity']:.3f}")
+        print(f"Policy: {result['text']}")
 
 
 if __name__ == "__main__":
