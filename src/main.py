@@ -1,6 +1,7 @@
 
 from pathlib import Path
 from chunker import chunk_policy
+from metadata import add_metadata
 
 
 # Financial Policy AI Assistant
@@ -40,6 +41,17 @@ def main():
     for number, chunk in enumerate(chunks, start=1):
         print(f"\n--- Chunk {number} ---")
         print(chunk)    
+
+    # Add source metadata to each chunk
+    records = add_metadata(chunks, policy_file.name)
+
+    print("\n--- Document Metadata ---")
+
+    for record in records:
+        print(f"\nChunk ID: {record['chunk_id']}")
+        print(f"Source: {record['source']}")
+        print(f"Section: {record['section']}")
+
 
 
 if __name__ == "__main__":
