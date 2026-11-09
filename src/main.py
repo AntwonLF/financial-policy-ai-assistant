@@ -5,6 +5,10 @@ from .chunker import chunk_policy
 from .metadata import add_metadata
 from .embeddings import generate_embeddings
 from .search import search_policies
+from .context import build_context
+from .prompts import build_prompt
+from .llm import generate_answer
+
 
 
 # Financial Policy AI Assistant
@@ -56,7 +60,7 @@ def main():
         print(f"Section: {record['section']}")
 
     # Phase 3: Generate embeddings for policy chunks
-    print("\n--- Generating Embeddings ---")
+    print("\n--- Gener?ating Embeddings ---")
 
     embeddings = generate_embeddings(chunks)
 
@@ -80,7 +84,7 @@ def main():
     # Phase 3: Search banking policies by meaning
     print("\n--- Semantic Policy Search ---")
 
-    question = "How quickly must employee access be removed after termination?"
+    question = "How quickly must employees access be removed after termination?"
 
     results = search_policies(question, records, embeddings, top_k=3)
 
@@ -91,6 +95,30 @@ def main():
         print(f"Source: {result['source']}")
         print(f"Similarity: {result['similarity']:.3f}")
         print(f"Policy: {result['text']}")
+
+    # Phase 4: Prepare restrieved evidence for the LLM
+    print('\n--- LLM Context ---')
+
+    context = build_context(results)
+
+    print(context)
+
+    # Phase 4: Build the prompt for the LLM
+    print("\n--- LLM Prompt ---")
+
+    prompt = build_prompt(question, context)
+
+    print(prompt)
+
+   
+    # Generate an AI response from the policy evidence
+    print("\n--- AI Generated Answer ---")
+
+    answer = generate_answer(prompt)
+
+    print(answer)
+
+
 
 
 if __name__ == "__main__":
