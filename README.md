@@ -4,7 +4,26 @@ A Python-based **Retrieval-Augmented Generation (RAG)** application that helps u
 
 The application uses semantic search to retrieve relevant policy sections from a persistent vector database, then uses a locally hosted large language model (LLM) to generate answers grounded in those documents.
 
-**Project Status: Phase 5 Complete — Working Local RAG Prototype with Persistent Vector Retrieval**
+
+<!-- START PROJECT STATUS -->
+
+## Current Project Status
+
+**Phase:** 5 — Persistent Vector Database (Complete)
+
+**Automated Tests:** 13 passing
+
+**Latest Accomplishments:**
+- Integrated persistent ChromaDB vector storage.
+- Indexed nine fictional banking policy sections.
+- Connected database retrieval to the RAG pipeline.
+- Verified source-grounded answers using Llama 3.2.
+- Tested database persistence and duplicate prevention.
+
+**Next Phase:** Phase 6 — FastAPI and React Frontend
+
+<!-- END PROJECT STATUS -->
+
 
 ## Features Implemented
 
