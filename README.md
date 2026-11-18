@@ -1,66 +1,78 @@
-
-
 # Financial Policy AI Assistant
 
-A Python-based Retrieval-Augmented Generation (RAG) application that helps users find and understand information in financial and cybersecurity policies.
+A Python-based **Retrieval-Augmented Generation (RAG)** application that helps users find and understand information in financial and cybersecurity policies.
 
-The application uses semantic search to retrieve relevant policy sections and a locally hosted LLM to generate answers grounded in those documents.
+The application uses semantic search to retrieve relevant policy sections from a persistent vector database, then uses a locally hosted large language model (LLM) to generate answers grounded in those documents.
 
-**Project Status: Phase 4 Complete — Working Local RAG Prototype**
+**Project Status: Phase 5 Complete — Working Local RAG Prototype with Persistent Vector Retrieval**
 
 ## Features Implemented
 
-- Load fictional financial policy documents from text files.
-- Split documents into searchable chunks.
+- Load a fictional financial policy from a text file.
+- Split policy documents into searchable chunks.
 - Preserve source filenames, section headings, and chunk IDs.
 - Generate 384-dimensional embeddings using Sentence Transformers.
-- Rank policy sections using cosine similarity.
-- Assemble retrieved evidence into an LLM prompt.
-- Generate answers locally using Ollama and Llama 3.2.
-- Include policy source references in generated answers.
-- Run automated tests for core application components.
+- Store policy text, embeddings, and metadata in a persistent ChromaDB collection.
+- Re-index policy chunks using stable IDs without creating duplicate records.
+- Retrieve relevant sections from ChromaDB using cosine-distance vector search.
+- Assemble retrieved evidence into a structured LLM prompt.
+- Generate answers locally using Ollama and Llama 3.2 (3B).
+- Ask the model to include policy source references in generated answers.
+- Run automated tests for document processing, retrieval, prompting, LLM communication, and database behavior.
 
 ## Architecture
 
+The system separates **indexing** (preparing and storing documents) from **question answering** (retrieving stored evidence and generating a response).
+
 ```mermaid
 flowchart TD
-    A[Financial Policy Documents] --> B[Document Loader]
-    B --> C[Chunking and Metadata]
-    C --> D[Sentence Transformers]
-    D --> E[Document Embeddings]
+    subgraph Indexing[Document Indexing]
+        A[Financial Policy Text File] --> B[Document Loader]
+        B --> C[Chunking and Metadata]
+        C --> D[Sentence Transformers]
+        D --> E[(ChromaDB - Persistent Vector Database)]
+    end
 
-    F[User Question] --> G[Question Embedding]
-    E --> H[Semantic Search]
-    G --> H
-
-    H --> I[Relevant Policy Sections]
-    I --> J[Context and Prompt Builder]
-    F --> J
-
-    J --> K[Ollama - Llama 3.2]
-    K --> L[Generated Answer with Source References]
+    subgraph Answering[Question Answering]
+        F[User Question] --> G[Question Embedding]
+        G --> H[ChromaDB Semantic Search]
+        E --> H
+        H --> I[Retrieved Policy Sections]
+        I --> J[Context and Prompt Builder]
+        F --> J
+        J --> K[Ollama - Llama 3.2]
+        K --> L[Generated Answer with Source References]
+    end
 ```
+
+### How It Works
+
+1. **Index documents:** `src.index_policies` loads the sample policy, creates chunks and metadata, generates embeddings, and stores them in ChromaDB.
+2. **Ask a question:** The current terminal prototype uses a predefined question in `src.main`.
+3. **Retrieve evidence:** The question is embedded, and ChromaDB returns the most similar stored policy sections.
+4. **Generate an answer:** The retrieved text and source information become the context for Llama 3.2.
+5. **Review the result:** The generated answer is displayed alongside the retrieved evidence. Source references are model-generated and are not yet automatically validated.
 
 ## Technology Stack
 
 | Technology | Purpose |
 |---|---|
-| Python | Core application development |
+| Python 3.12 | Core application development |
 | Sentence Transformers | Text embedding generation |
-| NumPy | Vector operations and similarity calculations |
+| NumPy | Vector operations and testing |
+| ChromaDB | Persistent storage and semantic vector retrieval |
 | Ollama | Local language model runtime |
-| Llama 3.2 3B | Natural-language answer generation |
-| unittest | Automated software testing |
-| Git and GitHub | Version control |
+| Llama 3.2 (3B) | Natural-language answer generation |
+| `unittest` | Automated software testing |
+| Git and GitHub | Version control and collaboration |
 
 ## Getting Started
 
 ### Requirements
 
-- Python 3.12
-- Git
-- Ollama installed and running
-- Llama 3.2 3B downloaded locally
+- Python 3.12 and Git
+- Ollama installed and running locally
+- Llama 3.2 (3B) downloaded through Ollama
 
 ### Installation
 
@@ -71,7 +83,7 @@ git clone https://github.com/AntwonLF/financial-policy-ai-assistant.git
 cd financial-policy-ai-assistant
 ```
 
-Create and activate a Python virtual environment:
+Create and activate a Python virtual environment (macOS/Linux):
 
 ```bash
 python3 -m venv .venv
@@ -84,11 +96,19 @@ Install dependencies:
 python -m pip install -r requirements.txt
 ```
 
-Download the language model:
+Download the local language model and ensure Ollama is running:
 
 ```bash
 ollama pull llama3.2:3b
 ```
+
+**Build the local vector database first.** The `chroma_db/` directory is generated locally and is not committed to Git:
+
+```bash
+python -m src.index_policies
+```
+
+The sample policy should produce **9 stored chunks**. Repeating the indexing command updates existing IDs rather than creating duplicates.
 
 Run the application:
 
@@ -96,28 +116,29 @@ Run the application:
 python -m src.main
 ```
 
-The current prototype runs a predefined demonstration question and displays retrieved policy evidence and the AI-generated response in the terminal.
+The current prototype runs a **predefined demonstration question** and displays retrieved policy evidence and the AI-generated answer in the terminal. It does not yet have an interactive web interface.
 
 ## Testing
 
-Run the automated test suite:
+Run the complete automated test suite:
 
 ```bash
 python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-**Latest development checkpoint: 11 automated tests passed.**
+**Latest development checkpoint: 13 automated tests passed.**
 
-Tests cover document chunking, metadata generation, semantic search ranking, context formatting, prompt construction, and mocked LLM communication.
+Tests cover document chunking, source metadata, semantic ranking, context formatting, prompt construction, mocked LLM communication, ChromaDB persistence, duplicate prevention, and database retrieval. The database tests use an isolated temporary collection rather than modifying the development database.
 
-### Manual Evaluation
+### Manual RAG Evaluation
 
-Two initial RAG evaluations were completed:
+Initial manual checks included:
 
-1. **MFA requirements:** The assistant correctly identified multi-factor authentication and cited the relevant policy section.
-2. **Vacation allowance:** The assistant correctly stated that the information was not present in the provided policy context.
+1. **Account termination:** Correctly identified the 24-hour account-disabling requirement and cited Section 3.
+2. **MFA requirements:** Correctly identified multi-factor authentication and cited Section 2.
+3. **Vacation allowance:** Stated that the information was not found in the provided policy context rather than inventing a requirement.
 
-These are preliminary evaluations, not proof of general model reliability.
+These are preliminary checks, **not** a comprehensive measurement of model accuracy or reliability.
 
 ## Roadmap
 
@@ -125,27 +146,27 @@ These are preliminary evaluations, not proof of general model reliability.
 - [x] Phase 2 — Document Processing and Metadata
 - [x] Phase 3 — Embeddings and Semantic Search
 - [x] Phase 4 — RAG and LLM Integration
-- [ ] Phase 5 — Persistent Vector Database
+- [x] Phase 5 — Persistent Vector Database
 - [ ] Phase 6 — FastAPI Backend and React Frontend
-- [ ] Phase 6 Extension — Minimal Animated AI Avatar and Voice
+- [ ] Phase 6 Extension — Minimal Animated AI Avatar and Optional Voice
 - [ ] Phase 7 — Expanded Evaluation and Deployment
 
 ## Current Limitations
 
-- Processes one predefined fictional text policy.
-- Uses in-memory embeddings rather than a persistent vector database.
-- Runs through the terminal instead of an interactive user interface.
-- Generated citations are not yet independently validated.
-- More extensive retrieval and answer-quality evaluation is needed.
+- Processes one predefined fictional text policy; additional document formats and multi-document ingestion are not yet implemented.
+- Runs a predefined question through the terminal, not a user-facing web application.
+- The vector database is built locally through a separate indexing command; automatic document-change detection is not yet implemented.
+- Citations are requested in the prompt but are not yet independently checked against the retrieved records.
+- More extensive retrieval evaluation, unsupported-question handling, and answer-quality testing are needed.
 
 ## Data and Responsible AI
 
-All sample policy documents are fictional and created for educational and portfolio purposes.
+All sample policies are **fictional** and created for educational and portfolio purposes.
 
-The application is not connected to real banking systems or confidential financial records. AI-generated answers should be verified against their cited source documents.
+The application is not connected to real banking systems or confidential financial records. Generated answers should be checked against the original policy text before being used for real decisions.
 
 ## Project Purpose
 
-This project demonstrates practical AI engineering through document processing, deep-learning embeddings, semantic retrieval, prompt engineering, local LLM integration, and software testing.
+This project demonstrates applied AI engineering through document processing, deep-learning embeddings, persistent vector retrieval, prompt engineering, local LLM integration, and software testing.
 
-Future development will expand the system into a full-stack application with a responsive React interface.
+Future work will extend it into a full-stack application with FastAPI, React, a responsive interface, and a minimal animated assistant.

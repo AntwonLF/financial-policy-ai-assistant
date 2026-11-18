@@ -3,11 +3,11 @@ from pathlib import Path
 
 from .chunker import chunk_policy
 from .metadata import add_metadata
-from .embeddings import generate_embeddings
-from .search import search_policies
 from .context import build_context
 from .prompts import build_prompt
 from .llm import generate_answer
+from .database import search_stored_policies
+
 
 
 
@@ -62,31 +62,13 @@ def main():
     # Phase 3: Generate embeddings for policy chunks
     print("\n--- Gener?ating Embeddings ---")
 
-    embeddings = generate_embeddings(chunks)
-
-    print("Embeddings generated successfully!")
-    print(f"Number of  chunks: {len(embeddings)}")
-    print(f"Dimensions per embedding: {embeddings.shape[1]}")
-    print(f"Embedding array shape: {embeddings.shape}")
-
-       # Examine an actual embedding
-    print("\n--- Exploring Embeddings ---")
-
-    print("First five numerical values:")
-    print(embeddings[0][:5])
-
-    # Compare two different policy sections
-    similarity = embeddings[2] @ embeddings[3]
-
-    print(f"Employee Access vs MFA similarity: {similarity:.3f}")
-
     
     # Phase 3: Search banking policies by meaning
     print("\n--- Semantic Policy Search ---")
 
     question = "How quickly must employees access be removed after termination?"
 
-    results = search_policies(question, records, embeddings, top_k=3)
+    results = search_stored_policies(question, top_k=3)
 
     print(f"\nQuestion: {question}")
 
